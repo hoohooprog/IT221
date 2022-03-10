@@ -1,0 +1,135 @@
+/* 
+Using the techcertificate database, write the SQL to fulfill these statements or
+answer the questions. 
+*/
+
+/*
+1. What did it cost for a five-credit course in 2021? (Use pricehistory
+table.)
+
+select pricepercredit*5 where date(year) == 2021
+*/
+
+SELECT pricehistorykey, pricebegindate, pricepercredit, (pricepercredit * 5) AS "5-credit cost"
+FROM pricehistory
+WHERE EXTRACT(year FROM pricebegindate) = 2021;
+
+
+
+
+/*
+2. What did it cost for 15 credits in 2021? Remember the discount.
+https://www.postgresqltutorial.com/postgresql-round/
+*/
+SELECT pricehistorykey, pricebegindate, pricepercredit, pricediscount,
+(pricepercredit * 5) AS "5-credit",
+ROUND((pricepercredit * 5  + pricepercredit * 5 * pricediscount),2) AS "5-credit after discount"
+FROM pricehistory 
+WHERE EXTRACT(year FROM pricebegindate) = 2021;
+
+
+
+/*
+3. Format the results of programming exercise 2 to show as currency.
+https://database.guide/how-to-format-numbers-as-currency-in-postgresql/
+*/
+SELECT pricehistorykey, pricebegindate, pricepercredit, pricediscount,
+cast((pricepercredit * 5) as money) AS "5-credit",
+cast(ROUND((pricepercredit * 5  + pricepercredit * 5 * pricediscount),2) as money) AS "5-credit after discount"
+FROM pricehistory 
+WHERE EXTRACT(year FROM pricebegindate) = 2021;
+
+/*
+4. What are the distinct years in which people were added to the person
+table?
+*/
+SELECT DISTINCT EXTRACT(year FROM dateadded) AS "distinct years when people were added"
+FROM person;
+
+/*
+5. From the table certificate, return just the words “data and science” from
+the description of the Python programming course. (Use POSITION
+and SUBSTRING.)
+
+select ("data and science") from course where name == python
+position to find the index of first letter 'd' and index of last letter 'e'
+and use substring to return the character set
+
+The SUBSTRING function returns a subset of the character value. 
+The SUBSTRING function takes as an argument the character set—or character column—
+FROM a starting position FOR a specified number of
+characters. Samantha can use the SUBSTRING function, with the POSITION function as an indicator of 
+the stopping point. Samantha’s query will look like this:
+SELECT personemail, SUBSTRING(personemail FROM 1 FOR POSITION('@' IN personemail)-1)
+AS "UserName"
+FROM person;
+
+SELECT SUBSTRING('python', POSITION('python' IN 'certificatename')) AS "certificate name", certificatekey, 
+SUBSTRING('data and science',POSITION('data and science' IN 'certificatedescription')) AS "python data science"
+FROM certificate
+; WHY
+SELECT REGEXP_MATCHES(certificatename,'python programming','A-Za-z'), SUBSTRING('data and science',POSITION('data and science' IN 'certificatedescription')) AS "python data science"
+FROM certificate;
+*/
+
+SELECT certificatename, SUBSTRING('data and science',POSITION('data and science' IN 'certificatedescription')) AS "python data science"
+FROM certificate
+WHERE certificatename LIKE '%_ython%';
+
+
+SELECT *
+FROM certificate;
+/*
+6. What is the count of people who were added each year to the person
+table? Order it by year.
+
+ie how many people were added per year in order. group by year -> count(*)
+*/
+SELECT count(*), EXTRACT(year FROM dateadded) AS "year"
+FROM person
+GROUP BY EXTRACT(year FROM dateadded);
+
+/*
+7. What is the average final grade from the roster table? Round the
+number to two decimal places.
+to_char(AVG(donationamount),'$ 9,999.99') AS Average
+*/
+SELECT ROUND(AVG(finalgrade), 3) AS "average final grade"
+FROM roster;
+/*
+8. What is the highest grade from the roster table?
+*/
+SELECT ROUND(MAX(finalgrade),3) AS "highest grade"
+FROM roster;
+
+/*
+9. What is the average final grade per section? Order by sectionkey, and
+round to two decimal places.
+*/
+SELECT ROUND(AVG(finalgrade),2) AS "avg final grade per section", sectionkey
+FROM roster
+GROUP BY sectionkey
+ORDER BY sectionkey ASC
+;
+
+/*
+SELECT finalgrade, studentkey, sectionkey
+FROM roster
+WHERE finalgrade IS NULL
+ORDER BY sectionkey DESC;
+*/
+/*
+10. List all the students (use studentkey) who have an average final grade
+higher than 3.5. .
+*/
+SELECT studentkey, finalgrade
+FROM roster
+WHERE finalgrade > 3.5
+ORDER BY finalgrade desc;
+
+
+/*
+SELECT lastname, firstname, email, city, dateadded
+FROM person
+WHERE city = 'Seattle' AND EXTRACT(month FROM dateadded) = 02;
+*/
