@@ -85,6 +85,13 @@ table? Order it by year.
 
 ie how many people were added per year in order. group by year -> count(*)
 */
+
+-- from person table, aggregate values by YEAR and display the count according to year
+-- keywords: GROUP BY, EXTRACT(year FROM dateadded), count()
+SELECT count(EXTRACT(year FROM dateadded)), EXTRACT(year FROM dateadded) AS "year"
+FROM person
+GROUP BY EXTRACT(year FROM dateadded);
+
 SELECT count(*), EXTRACT(year FROM dateadded) AS "year"
 FROM person
 GROUP BY EXTRACT(year FROM dateadded);
@@ -94,11 +101,18 @@ GROUP BY EXTRACT(year FROM dateadded);
 number to two decimal places.
 to_char(AVG(donationamount),'$ 9,999.99') AS Average
 */
-SELECT ROUND(AVG(finalgrade), 3) AS "average final grade"
+-- takes average grade, labels as "average final grade" and round to 2 d.p
+-- keywords: ROUND(numeric, d.p), AVG, AS
+SELECT ROUND(AVG(finalgrade), 2) AS "average final grade"
 FROM roster;
+
+
 /*
 8. What is the highest grade from the roster table?
 */
+
+-- from roster table, find the MAX final grade and round to 3 d.p; label as "highest grade"
+-- keywords: ROUND(numeric, d.p), MAX(?numeric? column)
 SELECT ROUND(MAX(finalgrade),3) AS "highest grade"
 FROM roster;
 
@@ -106,9 +120,15 @@ FROM roster;
 9. What is the average final grade per section? Order by sectionkey, and
 round to two decimal places.
 */
+
+-- FROM roster table, aggregate values according to sectionkey, filter results to show
+-- only if average final grade IS NOT NULL; ascending order by sectionkey
+-- returns average final grade of each section in 2 D.P, labeled as "avg final grade per section"
+-- keywords: ROUND(numeric, d.p), AS "chosen name", GROUP BY, HAVING, AVG(?numeric? column), IS NOT
 SELECT ROUND(AVG(finalgrade),2) AS "avg final grade per section", sectionkey
 FROM roster
 GROUP BY sectionkey
+HAVING AVG(finalgrade) IS NOT NULL
 ORDER BY sectionkey ASC
 ;
 
@@ -118,16 +138,21 @@ FROM roster
 WHERE finalgrade IS NULL
 ORDER BY sectionkey DESC;
 */
+
 /*
 10. List all the students (use studentkey) who have an average final grade
 higher than 3.5. .
 */
+-- from roster table, select grades only higher than 3.5, display grades with its
+-- corresponding studentkey ordered by finalgrade descending
 SELECT studentkey, finalgrade
 FROM roster
 WHERE finalgrade > 3.5
 ORDER BY finalgrade desc;
 
-
+SELECT studentkey, finalgrade
+FROM roster
+WHERE finalgrade BETWEEN 3.5 AND 4.0
 /*
 SELECT lastname, firstname, email, city, dateadded
 FROM person
