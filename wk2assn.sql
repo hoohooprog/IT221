@@ -54,10 +54,46 @@ WHERE coursedescription LIKE '%Python%';
 
 -- 11. Using the roster table, list only unduplicated students for sections 77
 -- through 100.
-SELECT 
-	DISTINCT(studentkey)
+
+-- unduplicated studentkey for sectionkey 77 and 100
+SELECT DISTINCT(studentkey)
 FROM roster
-WHERE sectionkey = '77';
+WHERE sectionkey = '77' OR sectionkey = '100';
+
+-- undup stdkey for sectkeys 77 THRU 100
+SELECT DISTINCT(studentkey)
+FROM roster
+WHERE sectionkey BETWEEN '77' AND '100';
+
+-- counts of stdkey appearing in sectkeys 77 thru 100
+SELECT studentkey, count(*)
+FROM roster
+WHERE sectionkey BETWEEN '77' AND '100'
+GROUP BY studentkey
+ORDER BY count(*) DESC;
+
+-- ?? count number of students that only appear in 1 sectkey ?? nested query?
+
+-- ?? how about finding studentkeys that are duplicates ?? USE INNER JOIN IF DIFFERENT TABLE
+-- https://stackoverflow.com/questions/28156795/how-to-find-duplicate-records-in-postgresql
+-- "group by" function aggregates distinct studentkeys, ie keys that can be found in either sections
+-- hence storing table  "virtually" as (key,value) pairs
+-- HAVING condition only shows studentkeys with values more than 1
+
+SELECT 
+	studentkey, count(*)
+FROM roster
+WHERE sectionkey = '77' OR sectionkey = '100'
+GROUP BY studentkey
+HAVING count(*)>1;
+
+-- students that only appear in either(non inclusive) table
+SELECT studentkey
+FROM roster
+WHERE sectionkey = '77' OR sectionkey = '100'
+GROUP BY studentkey
+HAVING COUNT(*) = 1;
+
 
 -- 12. Use CASE to determine the letter grade for each student in section
 -- It should use the breakdown given in the table below. Return the
