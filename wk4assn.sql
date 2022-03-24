@@ -49,6 +49,8 @@ FROM quarter
 INNER JOIN coursesection ON (quarter.quarterkey = coursesection.quarterkey)
 INNER JOIN course ON (coursesection.coursekey = course.coursekey);
 
+-- looking at schema, I know to find combination of quarter and courses, I need to combine tables quarter, coursesection and course
+
 /*
 2. What are the names, emails, and start dates of all the students who
 started sometime in 2020?
@@ -114,6 +116,13 @@ ORDER BY quarter.quartername, course.coursename;
 -- tables needed: course(coursekey, coursename), coursesection(coursekey,sectionkey), roster(sectionkey, finalgrade)
 -- fns: GROUP BY to make distinct courses, AVERAGE SUM of finalgrade 
 
+SELECT course.coursename, ROUND(SUM(roster.finalgrade)/count(roster.studentkey),2) AS "average grades of class"
+FROM course
+INNER JOIN coursesection ON (course.coursekey = coursesection.coursekey)
+INNER JOIN roster ON (roster.sectionkey = coursesection.sectionkey)
+GROUP BY course.coursename
+HAVING SUM(roster.finalgrade)/count(roster.studentkey) IS NOT NULL;
+
 SELECT course.coursename, SUM(roster.finalgrade)/count(roster.studentkey)
 FROM course
 INNER JOIN coursesection ON (course.coursekey = coursesection.coursekey)
@@ -134,7 +143,16 @@ INNER JOIN coursesection ON (course.coursekey = coursesection.coursekey)
 INNER JOIN roster ON (roster.sectionkey = coursesection.sectionkey)
 WHERE course.coursename LIKE 'ETL%';
 
-SELECT SUM(roster.finalgrade)/count(roster.studentkey) AS etl_and_reporting_tools
+-- join tables course, coursesectionn, roster, filter for courses that start with ETL and display count of 
+-- rows across course and roster with final grade above 2.0
+-- ?? HOW TO SHOW COURSE NAME COLUMN IN RETURN, ALONG WITH COUNT, RATHER THAN JUST NAMING COLUMN AS SUCH  ??
+SELECT count(roster.finalgrade > 2.0) AS "# PEOPLE ACROSS ROSTER THAT HAS GRADE ABOVE 2.0 FOR COURSE ETL"
+FROM course
+INNER JOIN coursesection ON (course.coursekey = coursesection.coursekey)
+INNER JOIN roster ON (roster.sectionkey = coursesection.sectionkey)
+WHERE course.coursename LIKE 'ETL%';
+
+SELECT ROUND(SUM(roster.finalgrade)/count(roster.studentkey),2) AS etl_and_reporting_tools
 FROM course
 INNER JOIN coursesection ON (course.coursekey = coursesection.coursekey)
 INNER JOIN roster ON (roster.sectionkey = coursesection.sectionkey)
@@ -147,6 +165,8 @@ WHERE course.coursename LIKE 'ETL%';
 -- tables used: roster(studentkey, finalgrade), coursesection(sectionkey)
 
 -- check coursesection
+-- sum the grades that studentkey 21 received across all classes and divide by the # of times
+-- it appears to get average
 SELECT SUM(roster.finalgrade)/COUNT(roster.studentkey) AS stdkey_21_gpa
 FROM roster
 WHERE studentkey = 21;
@@ -164,7 +184,9 @@ WHERE coursesection.coursekey ISNULL;
 8. What are the names of the courses that have never been offered yet?
 */
 
--- tables used: 
+-- courses that haven been offered yet do not have coursesection.coursekey/course.coursekey
+-- LEFT JOIN == values in the left set + ISNULL == exclude items with connecting key
+-- tables used: course(coursekey, coursename); coursesection(coursekey)
 SELECT course.coursekey, course.coursename, coursesection.coursekey
 FROM course
 LEFT JOIN coursesection ON (coursesection.coursekey = course.coursekey)
@@ -173,7 +195,7 @@ WHERE coursesection.coursekey ISNULL;
 /*
 9. Use a FULL JOIN to return the same values as in question 8.
 */
-
+-- combbine whole set then show only NULL coursekey
 SELECT course.coursekey, course.coursename, coursesection.coursekey, coursesection.quarterkey
 FROM course
 FULL JOIN coursesection ON (coursesection.coursekey = course.coursekey)
@@ -183,8 +205,15 @@ WHERE coursesection.coursekey ISNULL;
 10. Use a NATURAL JOIN to show the name of each certificate and the
 names of the courses each contains.
 */
+-- NATURAL JOIN PRODUCES EQUIVALENT RESULTS AS INNER JOIN (IN THIS CASE OR IN GENERAL?)
 SELECT certificate.certificatekey, certificate.certificatename, course.coursename
 FROM certificate
 JOIN certificatecourse ON (certificate.certificatekey = certificatecourse.certificatekey)
 JOIN course ON (course.coursekey = course.coursekey)
+GROUP BY certificate.certificatekey, certificate.certificatename, course.coursename;
+
+SELECT certificate.certificatekey, certificate.certificatename, course.coursename
+FROM certificate
+INNER JOIN certificatecourse ON (certificate.certificatekey = certificatecourse.certificatekey)
+INNER JOIN course ON (course.coursekey = course.coursekey)
 GROUP BY certificate.certificatekey, certificate.certificatename, course.coursename;
