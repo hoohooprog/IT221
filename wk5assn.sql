@@ -107,3 +107,129 @@ WHERE
 */
 -- look at roster table again
 -- find tables that connect to roster that contains values to be averaged
+-- 
+/*
+WITH section_avg AS 
+(
+	SELECT sectionkey, AVG(finalgrade) AS "section_avg"
+	FROM roster
+	GROUP BY sectionkey
+	HAVING AVG(finalgrade) IS NOT NULL
+	ORDER BY sectionkey DESC
+),
+overall_avg AS
+(
+	SELECT AVG(finalgrade) AS "total_avg"
+	FROM roster
+)
+
+SELECT section_avg.sectionkey, ROUND(section_avg.sectionaverage,2) AS sectionaverage,
+ROUND(AVG(finalgrade),2) AS "overallaverage",
+ROUND(section_avg.sectionaverage,2) - ROUND(AVG(finalgrade),2) AS "diff"
+FROM roster AS r1
+INNER JOIN 
+( SELECT sectionkey, AVG(finalgrade) AS "sectionaverage"
+	FROM roster
+	GROUP BY sectionkey
+	HAVING AVG(finalgrade) IS NOT NULL ) AS section_avg
+ON r1.sectionkey = section_avg.sectionkey
+GROUP BY section_avg.sectionkey, section_avg.sectionaverage
+ORDER BY sectionkey DESC;
+
+SELECT
+AVG(r1.finalgrade) AS "overallaverage", 
+( SELECT AVG(finalgrade) 
+    FROM roster
+    GROUP BY sectionkey
+    HAVING AVG(finalgrade) IS NOT NULL ) AS "section_avg"
+FROM roster AS r1
+GROUP BY sectionkey;
+*/
+-- select subquery can only return 1 const value 
+SELECT sectionkey,ROUND(AVG(finalgrade),2) AS "sectionaverage",
+(SELECT ROUND(AVG(finalgrade),2)
+ FROM roster) AS "overallaverage",
+ROUND((SELECT AVG(finalgrade)
+ FROM roster) - AVG(finalgrade),2) AS "diff"
+FROM roster
+GROUP BY sectionkey
+HAVING AVG(finalgrade) IS NOT NULL;
+
+/*6.  Use a table expression to get the student key, last name, first name and email from all the   students in section 30.*/
+
+--tables: roster(studentkey,sectionkey), student(studentkey, personkey),person(personkey, lastname, firstname,email)
+-- error w ambiguity because I had student.studentkey in select query
+
+	SELECT
+	roster.studentkey, person.lastname, person.firstname, person.email
+	FROM 
+	roster
+	INNER JOIN student
+	ON roster.studentkey = student.studentkey
+	INNER JOIN person
+	ON student.personkey = person.personkey
+	where roster.sectionkey = 30;
+
+
+
+/*
+7. Redo number 6 as a Common table expression.
+*/
+WITH students_in_sect30 AS (
+	SELECT
+	roster.studentkey, roster.sectionkey, person.personkey, person.lastname, person.firstname, person.email
+	FROM 
+	roster
+	INNER JOIN student
+	ON roster.studentkey = student.studentkey
+	INNER JOIN person
+	ON student.personkey = person.personkey
+	where roster.sectionkey = 30
+)
+SELECT studentkey, lastname, firstname, email
+FROM students_in_sect30;
+
+/*
+8. Create a Common table expression that shows each instructors name and specialty area.
+*/
+-- features: person.lastname, person.firstname, instructionalarea.areaname, instructionalarea.description
+-- tables: person(personkey),instructor(instructorkey, personkey),instructorarea(instructorkey,instructionalareakey),
+-- 		   instructionalarea(instructionalareakey)
+
+-- CTE with all of instructors' details
+-- why CTE? neater/cleaner than regular table expression, especially if using FROM subquery, allows us to define
+-- and name subqueries first, more logical/readable.
+WITH instructor_details AS (
+	SELECT *
+	FROM person
+	INNER JOIN instructor
+	ON person.personkey = instructor.personkey
+	INNER JOIN instructorarea
+	ON instructor.instructorkey = instructorarea.instructorkey
+	INNER JOIN instructionalarea
+	ON instructorarea.instructionalareakey = instructionalarea.instructionalareakey
+)
+SELECT lastname, firstname, areaname, description
+FROM instructor_details;
+
+/*
+9-10.   Create a correlated subquery that shows which students had grades less than the average grades for each section.
+*/
+SELECT r1.finalgrade, student.studentkey, person.lastname, person.firstname, r1.sectionkey
+FROM roster r1
+INNER JOIN student
+ON r1.studentkey = student.studentkey
+INNER JOIN person
+ON student.personkey = person.personkey
+WHERE finalgrade <
+		( SELECT AVG(finalgrade)
+		 FROM roster r2
+		  WHERE r1.sectionkey = r2.sectionkey )
+ORDER BY finalgrade DESC;
+
+/*
+SELECT AVG(finalgrade), sectionkey
+FROM roster
+GROUP BY sectionkey
+ORDER BY sectionkey;
+*/
